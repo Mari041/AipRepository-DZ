@@ -1,66 +1,58 @@
 #include <iostream>
 #include <fstream>
-#include <string>
+#include <algorithm>
+#include <vector>
 
 using namespace std;
 
+struct Ucenik
+{
+    char imePrezime[50];
+    float prosjek;
+};
+
+bool cmp(const Ucenik &a, const Ucenik &b)
+{
+    return a.prosjek > b.prosjek;
+}
+
 int main()
 {
-    int brUcenika;
-    cout << "Unesite broj ucenika: ";
-    cin >> brUcenika;
+    struct Ucenik ucenici[100];
+    int brUcenika = 0;
+    fstream datoteka("data.bin", ios::binary | ios::in);
+    while (datoteka.read((char *)&ucenici[brUcenika], sizeof(Ucenik)))
+    {
+        cout << ucenici[brUcenika].imePrezime << " " << ucenici[brUcenika].prosjek << endl;
+        brUcenika++;
+    }
+    datoteka.close();
+
+    int n;
+    cout << "Unesite broj ucenika koje zelite unijeti: ";
+    cin >> n;
     cin.ignore();
 
-    string ime_prezime[100];
-    double prosjek[100];
-
-    for (int i = 0; i < brUcenika; i++)
+    for (int i = 0; i < n; i++)
     {
-        cout << "Unesite prosjek " << i + 1 << ". ucenika: ";
-        cin >> prosjek[i];
+        cout << "Unesite ime prezime ucenika: ";
+        cin.getline(ucenici[brUcenika + i].imePrezime, 50);
+
+        cout << "Unesite prosjek ucenika:";
+        cin >> ucenici[brUcenika + i].prosjek;
         cin.ignore();
-        cout << "Unesite ime i prezime " << i + 1 << ". ucenika: ";
-        getline(cin, ime_prezime[i]);
     }
 
-    for (int i = 0; i < brUcenika - 1; i++)
-    {
-        for (int j = i+1; j < brUcenika; j++)
-        {
-            if(prosjek[i] < prosjek[j])
-            {
-                swap(prosjek[i], prosjek[j]);
-                swap(ime_prezime[i], ime_prezime[j]);
-            }
-        }
-        
-    }
+    sort(ucenici, ucenici + brUcenika + n, cmp);
 
-    fstream datotekaOut("ucenici.bin", ios::binary | ios::out);
     for (int i = 0; i < brUcenika; i++)
     {
-        datotekaOut.write((char *)&prosjek[i], sizeof(double));
-        int len = ime_prezime[i].size();
-        datotekaOut.write((char *)&len, sizeof(int));
-        datotekaOut.write((char *)&ime_prezime[i], sizeof(string));
+        cout << ucenici[i].imePrezime << " " << ucenici[i].prosjek << endl;
     }
-    datotekaOut.close();
 
-    fstream datotekaIn("ucenici.bin", ios::binary | ios::in);
-    for (int i = 0; i < brUcenika; i++)
-    {
-        string ime_prezime;
-        double prosjek;
-        datotekaIn.read((char *)&prosjek, sizeof(double));
-        int len;
-        datotekaIn.read((char *)&len, sizeof(int));
-        char *buffer = new char[len + 1];
-        datotekaIn.read(buffer, len);
-        buffer[len] = '\0';
-        ime_prezime = buffer;
-        delete[] buffer;
-        cout << ime_prezime << " " << prosjek << endl;
-    }
-    datotekaIn.close();
+    datoteka.open("data.bin", ios::binary | ios::out | ios::trunc);
+
+    datoteka.write((char *)ucenici, sizeof(Ucenik) * (brUcenika + n));
+    datoteka.close();
     return 0;
 }
